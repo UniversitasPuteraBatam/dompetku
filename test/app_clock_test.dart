@@ -39,8 +39,21 @@ void main() {
         'Selamat Malam 🌙',
       );
       expect(
-        greetingForJakartaTime(DateTime.utc(2026, 10, 7, 4)),
+        greetingForJakartaTime(DateTime.utc(2026, 10, 7, 23, 59)),
         'Selamat Malam 🌙',
+      );
+      // After midnight it is already pagi.
+      expect(
+        greetingForJakartaTime(DateTime.utc(2026, 10, 7, 0)),
+        'Selamat Pagi 🌅',
+      );
+      expect(
+        greetingForJakartaTime(DateTime.utc(2026, 10, 7, 3, 17)),
+        'Selamat Pagi 🌅',
+      );
+      expect(
+        greetingForJakartaTime(DateTime.utc(2026, 10, 7, 10, 59)),
+        'Selamat Pagi 🌅',
       );
     });
 

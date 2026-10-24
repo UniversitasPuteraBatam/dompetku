@@ -72,9 +72,11 @@ class AppClock {
       '${jakartaDate.second.toString().padLeft(2, '0')}';
 }
 
+/// Pagi starts right after midnight, matching everyday Indonesian usage
+/// ("jam 3 pagi").
 String greetingForJakartaTime(DateTime jakartaTime) {
   final hour = jakartaTime.hour;
-  if (hour >= 5 && hour < 11) return 'Selamat Pagi 🌅';
+  if (hour < 11) return 'Selamat Pagi 🌅';
   if (hour >= 11 && hour < 15) return 'Selamat Siang ☀️';
   if (hour >= 15 && hour < 19) return 'Selamat Sore 🌇';
   return 'Selamat Malam 🌙';

@@ -10,6 +10,6 @@ class FieldLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
     text,
-    style: const TextStyle(color: AppColors.text, fontWeight: FontWeight.w600),
+    style: TextStyle(color: context.palette.text, fontWeight: FontWeight.w600),
   );
 }

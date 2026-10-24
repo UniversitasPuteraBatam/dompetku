@@ -30,7 +30,7 @@ class AppLogo extends StatelessWidget {
         Text(
           'DompetKu',
           style: TextStyle(
-            color: AppColors.text,
+            color: context.palette.text,
             fontSize: compact ? 21 : 26,
             fontWeight: FontWeight.w700,
           ),

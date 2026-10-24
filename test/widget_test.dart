@@ -111,7 +111,7 @@ void main() {
     await tester.ensureVisible(find.text('Pengaturan'));
     await tester.tap(find.text('Pengaturan'));
     await tester.pumpAndSettle();
-    expect(find.text('Tema terang'), findsOneWidget);
+    expect(find.text('Tema aplikasi'), findsOneWidget);
     await tester.tap(find.text('Ganti Password'));
     await tester.pumpAndSettle();
     expect(find.text('Password lama'), findsOneWidget);

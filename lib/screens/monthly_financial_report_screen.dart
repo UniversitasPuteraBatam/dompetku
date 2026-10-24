@@ -186,7 +186,7 @@ class _MonthlyFinancialReportScreenState
                 '${monthNames[_selectedMonth - 1]} $_selectedYear',
                 key: const ValueKey('report-period-title'),
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: AppColors.text,
+                  color: context.palette.text,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -246,15 +246,15 @@ class _MonthlyFinancialReportScreenState
                     child: Text(
                       'Pengeluaran per Kategori',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.text,
+                        color: context.palette.text,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
                   Text(
                     '${report.expensesByCategory.length} kategori',
-                    style: const TextStyle(
-                      color: AppColors.secondaryText,
+                    style: TextStyle(
+                      color: context.palette.secondaryText,
                       fontSize: 12,
                     ),
                   ),
@@ -277,7 +277,7 @@ class _MonthlyFinancialReportScreenState
                     child: Text(
                       'Transaksi Bulanan',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.text,
+                        color: context.palette.text,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -285,8 +285,8 @@ class _MonthlyFinancialReportScreenState
                   Text(
                     '${report.transactionCount} transaksi',
                     key: const ValueKey('report-transaction-count'),
-                    style: const TextStyle(
-                      color: AppColors.secondaryText,
+                    style: TextStyle(
+                      color: context.palette.secondaryText,
                       fontSize: 12,
                     ),
                   ),
@@ -313,19 +313,27 @@ class _BalanceDisclosure extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(14),
     decoration: BoxDecoration(
-      color: const Color(0xFFEFF6FF),
+      color: context.palette.primarySoft,
       borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: const Color(0xFFDBEAFE)),
+      border: Border.all(color: context.palette.primarySoftBorder),
     ),
-    child: const Row(
+    child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(Icons.info_outline_rounded, color: AppColors.primary, size: 20),
+        Icon(
+          Icons.info_outline_rounded,
+          color: context.palette.accent,
+          size: 20,
+        ),
         SizedBox(width: 10),
         Expanded(
           child: Text(
             'Saldo awal dan akhir rekening tidak tersedia. API hanya menyediakan transaksi, tanpa saldo pembukaan atau informasi kelengkapan riwayat. Selisih di atas adalah arus bersih transaksi bulan ini, bukan saldo rekening.',
-            style: TextStyle(color: AppColors.text, fontSize: 12, height: 1.4),
+            style: TextStyle(
+              color: context.palette.text,
+              fontSize: 12,
+              height: 1.4,
+            ),
           ),
         ),
       ],
@@ -354,19 +362,19 @@ class _ExpenseCategoryRow extends StatelessWidget {
             Expanded(
               child: Text(
                 item.category,
-                style: const TextStyle(
-                  color: AppColors.text,
+                style: TextStyle(
+                  color: context.palette.text,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ),
             if (isLargest)
-              const Padding(
+              Padding(
                 padding: EdgeInsets.only(right: 8),
                 child: Text(
                   'Terbesar',
                   style: TextStyle(
-                    color: AppColors.danger,
+                    color: context.palette.danger,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),
@@ -374,8 +382,8 @@ class _ExpenseCategoryRow extends StatelessWidget {
               ),
             Text(
               formatRupiah(item.amount),
-              style: const TextStyle(
-                color: AppColors.danger,
+              style: TextStyle(
+                color: context.palette.danger,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -384,8 +392,8 @@ class _ExpenseCategoryRow extends StatelessWidget {
         const SizedBox(height: 6),
         LinearProgressIndicator(
           value: total == 0 ? 0 : item.amount / total,
-          color: AppColors.danger,
-          backgroundColor: const Color(0xFFFEE2E2),
+          color: context.palette.danger,
+          backgroundColor: context.palette.dangerTrack,
           minHeight: 6,
           borderRadius: BorderRadius.circular(8),
         ),
@@ -404,14 +412,14 @@ class _InlineEmptyMessage extends StatelessWidget {
     width: double.infinity,
     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
     decoration: BoxDecoration(
-      color: Colors.white,
-      border: Border.all(color: AppColors.border),
+      color: context.palette.surface,
+      border: Border.all(color: context.palette.border),
       borderRadius: BorderRadius.circular(14),
     ),
     child: Text(
       message,
       textAlign: TextAlign.center,
-      style: const TextStyle(color: AppColors.secondaryText),
+      style: TextStyle(color: context.palette.secondaryText),
     ),
   );
 }

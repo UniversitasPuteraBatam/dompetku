@@ -44,8 +44,10 @@ class MonthlyFinancialReport {
     }
 
     final monthlyTransactions = transactions
-        .where((transaction) =>
-            transaction.date.year == year && transaction.date.month == month)
+        .where(
+          (transaction) =>
+              transaction.date.year == year && transaction.date.month == month,
+        )
         .toList(growable: false);
 
     var income = 0;
@@ -64,16 +66,21 @@ class MonthlyFinancialReport {
       }
     }
 
-    final categories = expensesByCategory.entries
-        .map(
-          (entry) =>
-              MonthlyExpenseCategory(category: entry.key, amount: entry.value),
-        )
-        .toList()
-      ..sort((first, second) {
-        final byAmount = second.amount.compareTo(first.amount);
-        return byAmount != 0 ? byAmount : first.category.compareTo(second.category);
-      });
+    final categories =
+        expensesByCategory.entries
+            .map(
+              (entry) => MonthlyExpenseCategory(
+                category: entry.key,
+                amount: entry.value,
+              ),
+            )
+            .toList()
+          ..sort((first, second) {
+            final byAmount = second.amount.compareTo(first.amount);
+            return byAmount != 0
+                ? byAmount
+                : first.category.compareTo(second.category);
+          });
 
     return MonthlyFinancialReport(
       year: year,

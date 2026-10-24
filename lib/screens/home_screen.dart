@@ -259,8 +259,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _addTransaction() async {
     final transaction = await Navigator.of(context).push<TransactionItem>(
       MaterialPageRoute(
-        builder: (context) =>
-            AddTransactionScreen(authService: _authService),
+        builder: (context) => AddTransactionScreen(authService: _authService),
       ),
     );
     if (!mounted || transaction == null) return;
@@ -487,14 +486,16 @@ class _DashboardScreen extends StatelessWidget {
                             Text(
                               greetingForJakartaTime(AppClock.now()),
                               style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(color: AppColors.secondaryText),
+                                  ?.copyWith(
+                                    color: context.palette.secondaryText,
+                                  ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               profile.name,
                               style: Theme.of(context).textTheme.titleLarge
                                   ?.copyWith(
-                                    color: AppColors.text,
+                                    color: context.palette.text,
                                     fontWeight: FontWeight.w700,
                                   ),
                             ),
@@ -531,7 +532,7 @@ class _DashboardScreen extends StatelessWidget {
                               label: 'Pemasukan',
                               amount: formatRupiah(store.totalIncome),
                               icon: Icons.south_west_rounded,
-                              color: AppColors.success,
+                              color: context.palette.success,
                             ),
                           ),
                           SizedBox(
@@ -540,7 +541,7 @@ class _DashboardScreen extends StatelessWidget {
                               label: 'Pengeluaran',
                               amount: formatRupiah(store.totalExpense),
                               icon: Icons.north_east_rounded,
-                              color: AppColors.danger,
+                              color: context.palette.danger,
                             ),
                           ),
                         ],
@@ -573,7 +574,7 @@ class _DashboardScreen extends StatelessWidget {
                           'Transaksi Terbaru',
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(
-                                color: AppColors.text,
+                                color: context.palette.text,
                                 fontWeight: FontWeight.w700,
                               ),
                         ),
@@ -677,24 +678,24 @@ class _SummaryCard extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: context.palette.surface,
       borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: AppColors.border),
+      border: Border.all(color: context.palette.border),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(icon, color: color, size: 21),
         const SizedBox(height: 14),
-        Text(label, style: const TextStyle(color: AppColors.secondaryText)),
+        Text(label, style: TextStyle(color: context.palette.secondaryText)),
         const SizedBox(height: 5),
         FittedBox(
           fit: BoxFit.scaleDown,
           alignment: Alignment.centerLeft,
           child: Text(
             amount,
-            style: const TextStyle(
-              color: AppColors.text,
+            style: TextStyle(
+              color: context.palette.text,
               fontSize: 18,
               fontWeight: FontWeight.w700,
             ),

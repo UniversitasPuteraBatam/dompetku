@@ -63,8 +63,8 @@ void main() {
       ),
     );
 
-    expect(find.text('Tema terang'), findsOneWidget);
-    expect(find.textContaining('Tema gelap belum tersedia'), findsOneWidget);
+    expect(find.text('Tema aplikasi'), findsOneWidget);
+    expect(find.text('Gelap'), findsOneWidget);
     await tester.tap(find.text('Ganti Password'));
     expect(changePasswordTapped, isTrue);
   });

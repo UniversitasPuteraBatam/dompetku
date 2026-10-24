@@ -28,7 +28,7 @@ class CashFlowSummary extends StatelessWidget {
             child: _AmountCard(
               label: 'Pemasukan',
               amount: income,
-              color: AppColors.success,
+              color: context.palette.success,
             ),
           ),
           const SizedBox(width: spacing),
@@ -37,7 +37,7 @@ class CashFlowSummary extends StatelessWidget {
             child: _AmountCard(
               label: 'Pengeluaran',
               amount: expense,
-              color: AppColors.danger,
+              color: context.palette.danger,
             ),
           ),
           const SizedBox(width: spacing),
@@ -46,7 +46,7 @@ class CashFlowSummary extends StatelessWidget {
             child: _AmountCard(
               label: 'Selisih',
               amount: difference,
-              color: AppColors.primary,
+              color: context.palette.accent,
             ),
           ),
         ],
@@ -71,8 +71,8 @@ class _AmountCard extends StatelessWidget {
     constraints: const BoxConstraints(minHeight: 100),
     padding: const EdgeInsets.all(10),
     decoration: BoxDecoration(
-      color: Colors.white,
-      border: Border.all(color: AppColors.border),
+      color: context.palette.surface,
+      border: Border.all(color: context.palette.border),
       borderRadius: BorderRadius.circular(14),
     ),
     child: Column(
@@ -82,7 +82,7 @@ class _AmountCard extends StatelessWidget {
           label,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 11, color: AppColors.secondaryText),
+          style: TextStyle(fontSize: 11, color: context.palette.secondaryText),
         ),
         const SizedBox(height: 10),
         FittedBox(

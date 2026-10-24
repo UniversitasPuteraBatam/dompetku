@@ -51,9 +51,9 @@ class _SplashScreenState extends State<SplashScreen> {
           Text(
             'Kelola keuanganmu dengan mudah',
             textAlign: TextAlign.center,
-            style: Theme.of(
-              context,
-            ).textTheme.bodyLarge?.copyWith(color: AppColors.secondaryText),
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              color: context.palette.secondaryText,
+            ),
           ),
           const SizedBox(height: 36),
           const SizedBox(

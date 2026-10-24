@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../services/app_clock.dart';
-import '../theme/app_theme.dart';
 import 'month_names.dart';
 
 class TransactionItem {
@@ -67,7 +66,6 @@ class TransactionItem {
   }
 
   String get title => note.trim().isEmpty ? category : note.trim();
-  Color get color => isIncome ? AppColors.success : AppColors.danger;
   String get amountLabel => formatRupiah(amount);
   String get signedAmount => '${isIncome ? '+' : '-'}${formatRupiah(amount)}';
   String get dateLabel => formatTransactionDate(date, includeTime: hasTime);

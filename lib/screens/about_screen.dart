@@ -13,9 +13,7 @@ class AboutScreen extends StatelessWidget {
     if (loader != null) return loader();
     final info = await PackageInfo.fromPlatform();
     final buildNumber = info.buildNumber;
-    return buildNumber.isEmpty
-        ? info.version
-        : '${info.version}+$buildNumber';
+    return buildNumber.isEmpty ? info.version : '${info.version}+$buildNumber';
   }
 
   @override
@@ -49,32 +47,32 @@ class AboutScreen extends StatelessWidget {
                 'DompetKu',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: AppColors.text,
+                  color: context.palette.text,
                   fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: 10),
-              const Text(
+              Text(
                 'Aplikasi pencatat keuangan pribadi untuk membantu memantau pemasukan, pengeluaran, dan laporan keuangan.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: AppColors.secondaryText,
+                  color: context.palette.secondaryText,
                   fontSize: 14,
                   height: 1.5,
                 ),
               ),
               const SizedBox(height: 28),
               Card(
-                color: Colors.white,
+                color: context.palette.surface,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
-                  side: const BorderSide(color: AppColors.border),
+                  side: BorderSide(color: context.palette.border),
                 ),
                 child: ListTile(
-                  leading: const Icon(
+                  leading: Icon(
                     Icons.info_outline_rounded,
-                    color: AppColors.primary,
+                    color: context.palette.accent,
                   ),
                   title: const Text('Versi aplikasi'),
                   subtitle: FutureBuilder<String>(

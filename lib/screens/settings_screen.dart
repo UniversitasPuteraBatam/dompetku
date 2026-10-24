@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import '../theme/theme_controller.dart';
 
 class SettingsScreen extends StatelessWidget {
-  const SettingsScreen({
-    super.key,
-    required this.onChangePassword,
-  });
+  const SettingsScreen({super.key, required this.onChangePassword});
 
   final VoidCallback onChangePassword;
 
@@ -23,7 +21,7 @@ class SettingsScreen extends StatelessWidget {
               Text(
                 'Akun',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppColors.text,
+                  color: context.palette.text,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -38,52 +36,86 @@ class SettingsScreen extends StatelessWidget {
               Text(
                 'Tampilan',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppColors.text,
+                  color: context.palette.text,
                   fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: 10),
-              const _SettingsTile(
-                icon: Icons.light_mode_outlined,
-                title: 'Tema terang',
-                subtitle: 'Tema aktif saat ini',
-              ),
-              const SizedBox(height: 10),
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
-                  border: Border.all(color: const Color(0xFFDBEAFE)),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: const Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      Icons.info_outline_rounded,
-                      color: AppColors.primary,
-                      size: 20,
-                    ),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Tema gelap belum tersedia. Beberapa halaman masih menggunakan warna terang secara langsung, sehingga perubahan tema global belum aman.',
-                        style: TextStyle(
-                          color: AppColors.text,
-                          fontSize: 13,
-                          height: 1.4,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              const _ThemeModePicker(),
             ],
           ),
         ),
       ),
     ),
   );
+}
+
+class _ThemeModePicker extends StatelessWidget {
+  const _ThemeModePicker();
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = ThemeScope.maybeOf(context);
+    final mode = controller?.mode ?? ThemeMode.system;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: context.palette.surface,
+        border: Border.all(color: context.palette.border),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Tema aplikasi',
+            style: TextStyle(
+              color: context.palette.text,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            switch (mode) {
+              ThemeMode.system => 'Mengikuti pengaturan terang/gelap perangkat',
+              ThemeMode.light => 'Selalu memakai tema terang',
+              ThemeMode.dark => 'Selalu memakai tema gelap',
+            },
+            style: TextStyle(
+              color: context.palette.secondaryText,
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 14),
+          SegmentedButton<ThemeMode>(
+            key: const ValueKey('theme-mode-picker'),
+            showSelectedIcon: false,
+            selected: {mode},
+            onSelectionChanged: controller == null
+                ? null
+                : (selection) => controller.setMode(selection.first),
+            segments: const [
+              ButtonSegment(
+                value: ThemeMode.system,
+                icon: Icon(Icons.brightness_auto_outlined),
+                label: Text('Sistem'),
+              ),
+              ButtonSegment(
+                value: ThemeMode.light,
+                icon: Icon(Icons.light_mode_outlined),
+                label: Text('Terang'),
+              ),
+              ButtonSegment(
+                value: ThemeMode.dark,
+                icon: Icon(Icons.dark_mode_outlined),
+                label: Text('Gelap'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _SettingsTile extends StatelessWidget {
@@ -101,25 +133,23 @@ class _SettingsTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Material(
-    color: Colors.white,
+    color: context.palette.surface,
     borderRadius: BorderRadius.circular(14),
     child: ListTile(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(color: AppColors.border),
+        side: BorderSide(color: context.palette.border),
       ),
-      leading: Icon(icon, color: AppColors.primary),
+      leading: Icon(icon, color: context.palette.accent),
       title: Text(
         title,
-        style: const TextStyle(
-          color: AppColors.text,
+        style: TextStyle(
+          color: context.palette.text,
           fontWeight: FontWeight.w600,
         ),
       ),
       subtitle: Text(subtitle),
-      trailing: onTap == null
-          ? null
-          : const Icon(Icons.chevron_right_rounded),
+      trailing: onTap == null ? null : const Icon(Icons.chevron_right_rounded),
       onTap: onTap,
     ),
   );

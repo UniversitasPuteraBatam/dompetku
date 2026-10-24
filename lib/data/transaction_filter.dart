@@ -68,7 +68,9 @@ class TransactionFilter {
     final today = AppClock.calendarDate(AppClock.dateString(now));
     final firstDate = switch (date) {
       TransactionDateFilter.today => today,
-      TransactionDateFilter.last7Days => today.subtract(const Duration(days: 6)),
+      TransactionDateFilter.last7Days => today.subtract(
+        const Duration(days: 6),
+      ),
       TransactionDateFilter.thisMonth => DateTime.utc(today.year, today.month),
       TransactionDateFilter.allDates => null,
     };

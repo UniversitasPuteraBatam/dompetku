@@ -24,7 +24,7 @@ class ProfileScreen extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        icon: const Icon(Icons.logout_rounded, color: AppColors.danger),
+        icon: Icon(Icons.logout_rounded, color: context.palette.danger),
         title: const Text('Logout dari DompetKu?'),
         content: const Text(
           'Kamu perlu login kembali untuk mengakses akun ini.',
@@ -54,7 +54,7 @@ class ProfileScreen extends StatelessWidget {
           child: Text(
             'Profil',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: AppColors.text,
+              color: context.palette.text,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -79,17 +79,17 @@ class ProfileScreen extends StatelessWidget {
                       Text(
                         profile.name,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.text,
+                          color: context.palette.text,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         profile.email,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: AppColors.secondaryText),
+                        style: TextStyle(color: context.palette.secondaryText),
                       ),
                     ],
                   ),
@@ -117,7 +117,7 @@ class ProfileScreen extends StatelessWidget {
               _ProfileMenuTile(
                 icon: Icons.logout_rounded,
                 title: 'Logout',
-                color: AppColors.danger,
+                color: context.palette.danger,
                 onTap: () => _confirmLogout(context),
               ),
             ],
@@ -133,40 +133,45 @@ class _ProfileMenuTile extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.onTap,
-    this.color = AppColors.text,
+    this.color,
   });
 
   final IconData icon;
   final String title;
   final VoidCallback onTap;
-  final Color color;
+
+  /// Defaults to the theme text color.
+  final Color? color;
 
   @override
-  Widget build(BuildContext context) => Material(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(14),
-    child: ListTile(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(color: AppColors.border),
-      ),
-      leading: Container(
-        width: 38,
-        height: 38,
-        decoration: BoxDecoration(
-          color: color == AppColors.danger
-              ? const Color(0xFFFEF2F2)
-              : const Color(0xFFEFF6FF),
-          borderRadius: BorderRadius.circular(12),
+  Widget build(BuildContext context) {
+    final color = this.color ?? context.palette.text;
+    return Material(
+      color: context.palette.surface,
+      borderRadius: BorderRadius.circular(14),
+      child: ListTile(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: BorderSide(color: context.palette.border),
         ),
-        child: Icon(icon, color: color, size: 20),
+        leading: Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: color == context.palette.danger
+                ? context.palette.dangerSoft
+                : context.palette.primarySoft,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        title: Text(
+          title,
+          style: TextStyle(color: color, fontWeight: FontWeight.w600),
+        ),
+        trailing: const Icon(Icons.chevron_right_rounded),
+        onTap: onTap,
       ),
-      title: Text(
-        title,
-        style: TextStyle(color: color, fontWeight: FontWeight.w600),
-      ),
-      trailing: const Icon(Icons.chevron_right_rounded),
-      onTap: onTap,
-    ),
-  );
+    );
+  }
 }

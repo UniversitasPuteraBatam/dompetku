@@ -88,13 +88,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     'Buat Akun',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: AppColors.text,
+                      color: context.palette.text,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'Mulai kelola keuanganmu hari ini',
-                    style: TextStyle(color: AppColors.secondaryText),
+                    style: TextStyle(color: context.palette.secondaryText),
                   ),
                   const SizedBox(height: 22),
                   _LabeledField(
@@ -224,8 +224,8 @@ class _LabeledField extends StatelessWidget {
     children: [
       Text(
         label,
-        style: const TextStyle(
-          color: AppColors.text,
+        style: TextStyle(
+          color: context.palette.text,
           fontWeight: FontWeight.w600,
         ),
       ),

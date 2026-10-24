@@ -79,7 +79,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 children: [
                   Text(
                     'Masukkan password lama dan buat password baru.',
-                    style: const TextStyle(color: AppColors.secondaryText),
+                    style: TextStyle(color: context.palette.secondaryText),
                   ),
                   const SizedBox(height: 24),
                   TextFormField(
@@ -89,8 +89,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       labelText: 'Password lama',
                       prefixIcon: Icon(Icons.lock_outline_rounded),
                     ),
-                    validator: (value) =>
-                        value == null || value.isEmpty
+                    validator: (value) => value == null || value.isEmpty
                         ? 'Password lama wajib diisi'
                         : null,
                   ),
@@ -102,8 +101,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       labelText: 'Password baru',
                       prefixIcon: Icon(Icons.lock_reset_rounded),
                     ),
-                    validator: (value) =>
-                        value == null || value.length < 6
+                    validator: (value) => value == null || value.length < 6
                         ? 'Password baru minimal 6 karakter'
                         : null,
                   ),
@@ -117,8 +115,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       labelText: 'Konfirmasi password baru',
                       prefixIcon: Icon(Icons.lock_outline_rounded),
                     ),
-                    validator: (value) =>
-                        value != _newPasswordController.text
+                    validator: (value) => value != _newPasswordController.text
                         ? 'Konfirmasi password belum cocok'
                         : null,
                   ),

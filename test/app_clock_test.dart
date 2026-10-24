@@ -24,36 +24,36 @@ void main() {
     test('formats greeting for all Jakarta day periods', () {
       expect(
         greetingForJakartaTime(DateTime.utc(2026, 10, 7, 8)),
-        'Selamat Pagi 🌅',
+        'Selamat Pagi',
       );
       expect(
         greetingForJakartaTime(DateTime.utc(2026, 10, 7, 12)),
-        'Selamat Siang ☀️',
+        'Selamat Siang',
       );
       expect(
         greetingForJakartaTime(DateTime.utc(2026, 10, 7, 16)),
-        'Selamat Sore 🌇',
+        'Selamat Sore',
       );
       expect(
         greetingForJakartaTime(DateTime.utc(2026, 10, 7, 21)),
-        'Selamat Malam 🌙',
+        'Selamat Malam',
       );
       expect(
         greetingForJakartaTime(DateTime.utc(2026, 10, 7, 23, 59)),
-        'Selamat Malam 🌙',
+        'Selamat Malam',
       );
       // After midnight it is already pagi.
       expect(
         greetingForJakartaTime(DateTime.utc(2026, 10, 7, 0)),
-        'Selamat Pagi 🌅',
+        'Selamat Pagi',
       );
       expect(
         greetingForJakartaTime(DateTime.utc(2026, 10, 7, 3, 17)),
-        'Selamat Pagi 🌅',
+        'Selamat Pagi',
       );
       expect(
         greetingForJakartaTime(DateTime.utc(2026, 10, 7, 10, 59)),
-        'Selamat Pagi 🌅',
+        'Selamat Pagi',
       );
     });
 

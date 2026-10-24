@@ -45,7 +45,7 @@ class _ProfileAvatarState extends State<ProfileAvatar> {
 
     return CircleAvatar(
       radius: widget.radius,
-      backgroundColor: const Color(0xFFDBEAFE),
+      backgroundColor: context.palette.primarySoftBorder,
       backgroundImage: image,
       onBackgroundImageError: image is NetworkImage
           ? (_, _) {
@@ -56,7 +56,7 @@ class _ProfileAvatarState extends State<ProfileAvatar> {
           ? Icon(
               Icons.person_rounded,
               size: widget.radius,
-              color: AppColors.primary,
+              color: context.palette.accent,
             )
           : null,
     );

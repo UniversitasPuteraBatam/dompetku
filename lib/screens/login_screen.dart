@@ -84,13 +84,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     'Selamat Datang',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: AppColors.text,
+                      color: context.palette.text,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'Masuk ke akun DompetKu kamu',
-                    style: TextStyle(color: AppColors.secondaryText),
+                    style: TextStyle(color: context.palette.secondaryText),
                   ),
                   const SizedBox(height: 30),
                   const FieldLabel('Email'),
@@ -153,10 +153,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Flexible(
+                      Flexible(
                         child: Text(
                           'Belum punya akun? ',
-                          style: TextStyle(color: AppColors.secondaryText),
+                          style: TextStyle(
+                            color: context.palette.secondaryText,
+                          ),
                         ),
                       ),
                       TextButton(

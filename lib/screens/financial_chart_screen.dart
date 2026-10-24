@@ -111,7 +111,7 @@ class _FinancialChartScreenState extends State<FinancialChartScreen> {
                 Text(
                   'Pemasukan & Pengeluaran',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: AppColors.text,
+                    color: context.palette.text,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -158,8 +158,8 @@ class _FinancialBarChart extends StatelessWidget {
           height: 270,
           padding: const EdgeInsets.fromLTRB(4, 12, 12, 8),
           decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: AppColors.border),
+            color: context.palette.surface,
+            border: Border.all(color: context.palette.border),
             borderRadius: BorderRadius.circular(16),
           ),
           // The chart always fits the available width so every day or month,
@@ -203,8 +203,8 @@ class _FinancialBarChart extends StatelessWidget {
                           meta: meta,
                           child: Text(
                             _shortAmount(value),
-                            style: const TextStyle(
-                              color: AppColors.secondaryText,
+                            style: TextStyle(
+                              color: context.palette.secondaryText,
                               fontSize: 9,
                             ),
                           ),
@@ -228,8 +228,8 @@ class _FinancialBarChart extends StatelessWidget {
                             meta: meta,
                             child: Text(
                               data.buckets[index].label,
-                              style: const TextStyle(
-                                color: AppColors.secondaryText,
+                              style: TextStyle(
+                                color: context.palette.secondaryText,
                                 fontSize: 10,
                               ),
                             ),
@@ -246,7 +246,7 @@ class _FinancialBarChart extends StatelessWidget {
                         barRods: [
                           BarChartRodData(
                             toY: data.buckets[index].income.toDouble(),
-                            color: AppColors.success,
+                            color: context.palette.success,
                             width: rodWidth,
                             borderRadius: BorderRadius.vertical(
                               top: Radius.circular(rodWidth / 2.5),
@@ -254,7 +254,7 @@ class _FinancialBarChart extends StatelessWidget {
                           ),
                           BarChartRodData(
                             toY: data.buckets[index].expense.toDouble(),
-                            color: AppColors.danger,
+                            color: context.palette.danger,
                             width: rodWidth,
                             borderRadius: BorderRadius.vertical(
                               top: Radius.circular(rodWidth / 2.5),
@@ -269,11 +269,11 @@ class _FinancialBarChart extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 14),
-        const Wrap(
+        Wrap(
           spacing: 20,
           children: [
-            _ChartLegend(color: AppColors.success, label: 'Pemasukan'),
-            _ChartLegend(color: AppColors.danger, label: 'Pengeluaran'),
+            _ChartLegend(color: context.palette.success, label: 'Pemasukan'),
+            _ChartLegend(color: context.palette.danger, label: 'Pengeluaran'),
           ],
         ),
       ],
@@ -299,7 +299,7 @@ class _ChartLegend extends StatelessWidget {
       const SizedBox(width: 6),
       Text(
         label,
-        style: const TextStyle(color: AppColors.secondaryText, fontSize: 12),
+        style: TextStyle(color: context.palette.secondaryText, fontSize: 12),
       ),
     ],
   );
@@ -313,18 +313,22 @@ class _EmptyChart extends StatelessWidget {
     width: double.infinity,
     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 36),
     decoration: BoxDecoration(
-      color: Colors.white,
-      border: Border.all(color: AppColors.border),
+      color: context.palette.surface,
+      border: Border.all(color: context.palette.border),
       borderRadius: BorderRadius.circular(16),
     ),
-    child: const Column(
+    child: Column(
       children: [
-        Icon(Icons.bar_chart_rounded, size: 38, color: AppColors.secondaryText),
+        Icon(
+          Icons.bar_chart_rounded,
+          size: 38,
+          color: context.palette.secondaryText,
+        ),
         SizedBox(height: 10),
         Text(
           'Belum ada transaksi pada periode ini',
           textAlign: TextAlign.center,
-          style: TextStyle(color: AppColors.secondaryText),
+          style: TextStyle(color: context.palette.secondaryText),
         ),
       ],
     ),

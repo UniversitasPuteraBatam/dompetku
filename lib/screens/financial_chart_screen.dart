@@ -1,0 +1,338 @@
+import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/material.dart';
+
+import '../data/dummy_transactions.dart';
+import '../data/financial_chart_data.dart';
+import '../services/app_clock.dart';
+import '../theme/app_theme.dart';
+import '../widgets/cash_flow_summary.dart';
+import '../widgets/error_notice.dart';
+
+class FinancialChartScreen extends StatefulWidget {
+  const FinancialChartScreen({
+    super.key,
+    required this.store,
+    required this.isLoading,
+    required this.errorMessage,
+    required this.onRefresh,
+    this.onMonthlyReportTap,
+  });
+
+  final TransactionStore store;
+  final bool isLoading;
+  final String? errorMessage;
+  final Future<String?> Function() onRefresh;
+  final VoidCallback? onMonthlyReportTap;
+
+  @override
+  State<FinancialChartScreen> createState() => _FinancialChartScreenState();
+}
+
+class _FinancialChartScreenState extends State<FinancialChartScreen> {
+  FinancialChartPeriod _period = FinancialChartPeriod.last7Days;
+  bool _isRefreshing = false;
+  String? _refreshError;
+
+  Future<void> _refresh() async {
+    setState(() {
+      _isRefreshing = true;
+      _refreshError = null;
+    });
+    try {
+      _refreshError = await widget.onRefresh();
+    } finally {
+      if (mounted) setState(() => _isRefreshing = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(
+      title: const Text('Grafik Keuangan'),
+      actions: [
+        if (widget.onMonthlyReportTap != null)
+          IconButton(
+            tooltip: 'Laporan Bulanan',
+            onPressed: widget.onMonthlyReportTap,
+            icon: const Icon(Icons.summarize_outlined),
+          ),
+      ],
+    ),
+    body: AnimatedBuilder(
+      animation: widget.store,
+      builder: (context, child) {
+        final chartData = FinancialChartData.fromTransactions(
+          transactions: widget.store.transactions,
+          period: _period,
+          now: AppClock.now(),
+        );
+        final isLoading = widget.isLoading || _isRefreshing;
+        if (isLoading && widget.store.transactions.isEmpty) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        return RefreshIndicator(
+          onRefresh: _refresh,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(22, 16, 22, 28),
+            children: [
+              if (isLoading) ...[
+                const LinearProgressIndicator(),
+                const SizedBox(height: 12),
+              ],
+              if (_refreshError != null || widget.errorMessage != null) ...[
+                ErrorNotice(
+                  message: _refreshError ?? widget.errorMessage!,
+                  onRetry: _refresh,
+                ),
+                const SizedBox(height: 16),
+              ],
+              Wrap(
+                spacing: 8,
+                children: FinancialChartPeriod.values
+                    .map(
+                      (period) => ChoiceChip(
+                        label: Text(period.label),
+                        selected: _period == period,
+                        onSelected: (_) => setState(() => _period = period),
+                      ),
+                    )
+                    .toList(),
+              ),
+              const SizedBox(height: 20),
+              CashFlowSummary(
+                income: chartData.income,
+                expense: chartData.expense,
+                difference: chartData.difference,
+              ),
+              const SizedBox(height: 24),
+              if (chartData.hasTransactions) ...[
+                Text(
+                  'Pemasukan & Pengeluaran',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: AppColors.text,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _FinancialBarChart(data: chartData),
+              ] else
+                const _EmptyChart(),
+            ],
+          ),
+        );
+      },
+    ),
+  );
+}
+
+class _FinancialBarChart extends StatelessWidget {
+  const _FinancialBarChart({required this.data});
+
+  final FinancialChartData data;
+
+  static const _leftAxisWidth = 44.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final peak = data.buckets.fold<int>(
+      0,
+      (value, bucket) => [
+        value,
+        bucket.income,
+        bucket.expense,
+      ].reduce((a, b) => a > b ? a : b),
+    );
+    final interval = peak == 0 ? 0.25 : peak / 4;
+    // Leave room for the final interval label instead of placing it on the
+    // chart's clipped top edge.
+    final maxY = interval * 5.5;
+    final labelStep = data.period == FinancialChartPeriod.thisMonth ? 5 : 1;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          key: const ValueKey('financial-chart-frame'),
+          height: 270,
+          padding: const EdgeInsets.fromLTRB(4, 12, 12, 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: AppColors.border),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          // The chart always fits the available width so every day or month,
+          // including today on the far right, is visible without scrolling.
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final groupCount = data.buckets.length;
+              final groupWidth =
+                  (constraints.maxWidth - _leftAxisWidth) / groupCount;
+              final barsSpace = groupCount > 12 ? 1.0 : 4.0;
+              final rodWidth = ((groupWidth * 0.8 - barsSpace) / 2).clamp(
+                2.0,
+                12.0,
+              );
+              return BarChart(
+                BarChartData(
+                  alignment: BarChartAlignment.spaceAround,
+                  maxY: maxY,
+                  minY: 0,
+                  gridData: FlGridData(
+                    show: true,
+                    drawVerticalLine: false,
+                    horizontalInterval: interval,
+                  ),
+                  borderData: FlBorderData(show: false),
+                  barTouchData: BarTouchData(enabled: true),
+                  titlesData: FlTitlesData(
+                    topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: _leftAxisWidth,
+                        interval: interval,
+                        maxIncluded: false,
+                        getTitlesWidget: (value, meta) => SideTitleWidget(
+                          meta: meta,
+                          child: Text(
+                            _shortAmount(value),
+                            style: const TextStyle(
+                              color: AppColors.secondaryText,
+                              fontSize: 9,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 32,
+                        getTitlesWidget: (value, meta) {
+                          final index = value.toInt();
+                          if (index < 0 || index >= data.buckets.length) {
+                            return const SizedBox.shrink();
+                          }
+                          if (index % labelStep != 0 &&
+                              index != data.buckets.length - 1) {
+                            return const SizedBox.shrink();
+                          }
+                          return SideTitleWidget(
+                            meta: meta,
+                            child: Text(
+                              data.buckets[index].label,
+                              style: const TextStyle(
+                                color: AppColors.secondaryText,
+                                fontSize: 10,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  barGroups: [
+                    for (var index = 0; index < data.buckets.length; index++)
+                      BarChartGroupData(
+                        x: index,
+                        barsSpace: barsSpace,
+                        barRods: [
+                          BarChartRodData(
+                            toY: data.buckets[index].income.toDouble(),
+                            color: AppColors.success,
+                            width: rodWidth,
+                            borderRadius: BorderRadius.vertical(
+                              top: Radius.circular(rodWidth / 2.5),
+                            ),
+                          ),
+                          BarChartRodData(
+                            toY: data.buckets[index].expense.toDouble(),
+                            color: AppColors.danger,
+                            width: rodWidth,
+                            borderRadius: BorderRadius.vertical(
+                              top: Radius.circular(rodWidth / 2.5),
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 14),
+        const Wrap(
+          spacing: 20,
+          children: [
+            _ChartLegend(color: AppColors.success, label: 'Pemasukan'),
+            _ChartLegend(color: AppColors.danger, label: 'Pengeluaran'),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _ChartLegend extends StatelessWidget {
+  const _ChartLegend({required this.color, required this.label});
+
+  final Color color;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Container(
+        width: 10,
+        height: 10,
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      ),
+      const SizedBox(width: 6),
+      Text(
+        label,
+        style: const TextStyle(color: AppColors.secondaryText, fontSize: 12),
+      ),
+    ],
+  );
+}
+
+class _EmptyChart extends StatelessWidget {
+  const _EmptyChart();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 36),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      border: Border.all(color: AppColors.border),
+      borderRadius: BorderRadius.circular(16),
+    ),
+    child: const Column(
+      children: [
+        Icon(Icons.bar_chart_rounded, size: 38, color: AppColors.secondaryText),
+        SizedBox(height: 10),
+        Text(
+          'Belum ada transaksi pada periode ini',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: AppColors.secondaryText),
+        ),
+      ],
+    ),
+  );
+}
+
+String _shortAmount(double value) {
+  if (value >= 1000000) return '${(value / 1000000).round()} jt';
+  if (value >= 1000) return '${(value / 1000).round()} rb';
+  return value.round().toString();
+}

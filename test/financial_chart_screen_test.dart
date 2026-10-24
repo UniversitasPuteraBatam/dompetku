@@ -72,7 +72,10 @@ void main() {
 
   for (final (period, lastLabel) in [
     ('7 Hari', '${AppClock.now().day}/${AppClock.now().month}'),
-    ('Bulan Ini', '${DateTime.utc(AppClock.now().year, AppClock.now().month + 1, 0).day}'),
+    (
+      'Bulan Ini',
+      '${DateTime.utc(AppClock.now().year, AppClock.now().month + 1, 0).day}',
+    ),
     ('Tahun Ini', 'Des'),
   ]) {
     testWidgets('$period chart fits a phone screen without scrolling', (

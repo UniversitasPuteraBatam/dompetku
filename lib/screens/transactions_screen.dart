@@ -1,31 +1,25 @@
 import 'package:flutter/material.dart';
 
 import '../data/dummy_transactions.dart';
-import '../data/user_profile.dart';
 import '../data/transaction_filter.dart';
 import '../services/app_clock.dart';
 import '../theme/app_theme.dart';
-import '../widgets/profile_avatar.dart';
 
 class TransactionsScreen extends StatefulWidget {
   const TransactionsScreen({
     super.key,
     required this.store,
-    required this.profile,
     required this.isLoading,
     required this.errorMessage,
     required this.onRefresh,
-    required this.onProfileTap,
     required this.onEditTransaction,
     required this.onDeleteTransaction,
   });
 
   final TransactionStore store;
-  final UserProfile profile;
   final bool isLoading;
   final String? errorMessage;
   final Future<void> Function() onRefresh;
-  final VoidCallback onProfileTap;
   final ValueChanged<int> onEditTransaction;
   final Future<void> Function(int) onDeleteTransaction;
 
@@ -43,11 +37,39 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     super.dispose();
   }
 
+  /// Type, period and category; the search text has its own clear button.
+  int get _activeFilterCount => [
+    _filter.type != TransactionTypeFilter.all,
+    _filter.date != TransactionDateFilter.allDates,
+    _filter.category != null,
+  ].where((active) => active).length;
+
   void _resetFilters() {
     setState(() {
       _searchController.clear();
       _filter = const TransactionFilter();
     });
+  }
+
+  Future<void> _openFilterSheet(
+    List<TransactionItem> transactions,
+    List<String> categories,
+  ) async {
+    final selected = await showModalBottomSheet<TransactionFilter>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      backgroundColor: context.palette.surface,
+      builder: (context) => _FilterSheet(
+        initialFilter: _filter,
+        categories: categories,
+        resultCount: (filter) => filter
+            .apply(transactions: transactions, now: AppClock.now())
+            .length,
+      ),
+    );
+    if (selected != null && mounted) setState(() => _filter = selected);
   }
 
   Future<void> _confirmDelete(BuildContext context, int index) async {
@@ -90,28 +112,13 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(22, 24, 22, 14),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Transaksi',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: context.palette.text,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  tooltip: 'Buka profile',
-                  onPressed: widget.onProfileTap,
-                  icon: ProfileAvatar(
-                    photoBytes: widget.profile.photoBytes,
-                    photoUrl: widget.profile.profilePhoto,
-                    radius: 18,
-                  ),
-                ),
-              ],
+            padding: const EdgeInsets.fromLTRB(22, 28, 22, 16),
+            child: Text(
+              'Transaksi',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                color: context.palette.text,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
           if (widget.errorMessage != null)
@@ -125,137 +132,97 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                 ),
               ),
             ),
+          // Search and a single filter button share one row; the type, period
+          // and category choices live in a bottom sheet to leave room for the
+          // list on phones.
           Padding(
-            padding: const EdgeInsets.fromLTRB(22, 0, 22, 8),
-            child: TextField(
-              key: const ValueKey('transaction-search'),
-              controller: _searchController,
-              onChanged: (query) =>
-                  setState(() => _filter = _filter.copyWith(query: query)),
-              decoration: InputDecoration(
-                hintText: 'Cari kategori atau deskripsi',
-                prefixIcon: const Icon(Icons.search_rounded),
-                suffixIcon: _filter.query.isEmpty
-                    ? null
-                    : IconButton(
-                        tooltip: 'Hapus pencarian',
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() => _filter = _filter.copyWith(query: ''));
-                        },
-                        icon: const Icon(Icons.close_rounded),
-                      ),
-              ),
-            ),
-          ),
-          SizedBox(
-            height: 42,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 22),
-              children: [
-                for (final type in TransactionTypeFilter.values)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      key: ValueKey('transaction-type-${type.name}'),
-                      label: Text(type.label),
-                      selected: _filter.type == type,
-                      onSelected: (_) => setState(
-                        () => _filter = _filter.copyWith(type: type),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 4),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 22),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                for (final date in TransactionDateFilter.values)
-                  ChoiceChip(
-                    key: ValueKey('transaction-date-${date.name}'),
-                    label: Text(date.label),
-                    selected: _filter.date == date,
-                    onSelected: (_) =>
-                        setState(() => _filter = _filter.copyWith(date: date)),
-                  ),
-                PopupMenuButton<String?>(
-                  key: const ValueKey('transaction-category-filter'),
-                  tooltip: 'Filter kategori',
-                  initialValue: _filter.category,
-                  onSelected: (category) => setState(
-                    () => _filter = category == null
-                        ? _filter.copyWith(clearCategory: true)
-                        : _filter.copyWith(category: category),
-                  ),
-                  itemBuilder: (context) => [
-                    const PopupMenuItem<String?>(
-                      value: null,
-                      child: Text('Semua kategori'),
-                    ),
-                    for (final category in categories)
-                      PopupMenuItem<String?>(
-                        value: category,
-                        child: Text(category),
-                      ),
-                  ],
-                  child: Container(
-                    constraints: const BoxConstraints(maxWidth: 116),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: context.palette.surface,
-                      border: Border.all(color: context.palette.border),
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Flexible(
-                          child: Text(
-                            _filter.category ?? 'Kategori',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                        ),
-                        const Icon(Icons.arrow_drop_down_rounded, size: 20),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(22, 8, 22, 4),
+            padding: const EdgeInsets.fromLTRB(22, 0, 22, 10),
             child: Row(
               children: [
                 Expanded(
-                  child: Text(
-                    '${filteredTransactions.length} transaksi ditemukan',
-                    key: const ValueKey('transaction-result-count'),
-                    style: TextStyle(
-                      color: context.palette.secondaryText,
-                      fontSize: 13,
+                  child: TextField(
+                    key: const ValueKey('transaction-search'),
+                    controller: _searchController,
+                    onChanged: (query) => setState(
+                      () => _filter = _filter.copyWith(query: query),
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'Cari transaksi',
+                      prefixIcon: const Icon(Icons.search_rounded),
+                      suffixIcon: _filter.query.isEmpty
+                          ? null
+                          : IconButton(
+                              tooltip: 'Hapus pencarian',
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(
+                                  () => _filter = _filter.copyWith(query: ''),
+                                );
+                              },
+                              icon: const Icon(Icons.close_rounded),
+                            ),
                     ),
                   ),
                 ),
-                TextButton(
-                  key: const ValueKey('transaction-reset-filters'),
-                  onPressed: _filter.isDefault ? null : _resetFilters,
-                  child: const Text('Reset filter'),
+                const SizedBox(width: 10),
+                _FilterButton(
+                  activeCount: _activeFilterCount,
+                  onPressed: () =>
+                      _openFilterSheet(allTransactions, categories),
                 ),
               ],
+            ),
+          ),
+          if (_activeFilterCount > 0)
+            SizedBox(
+              height: 40,
+              child: ListView(
+                key: const ValueKey('transaction-active-filters'),
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 22),
+                children: [
+                  if (_filter.type != TransactionTypeFilter.all)
+                    _ActiveFilterChip(
+                      label: _filter.type.label,
+                      onDeleted: () => setState(
+                        () => _filter = _filter.copyWith(
+                          type: TransactionTypeFilter.all,
+                        ),
+                      ),
+                    ),
+                  if (_filter.date != TransactionDateFilter.allDates)
+                    _ActiveFilterChip(
+                      label: _filter.date.label,
+                      onDeleted: () => setState(
+                        () => _filter = _filter.copyWith(
+                          date: TransactionDateFilter.allDates,
+                        ),
+                      ),
+                    ),
+                  if (_filter.category != null)
+                    _ActiveFilterChip(
+                      label: _filter.category!,
+                      onDeleted: () => setState(
+                        () => _filter = _filter.copyWith(clearCategory: true),
+                      ),
+                    ),
+                  TextButton(
+                    key: const ValueKey('transaction-reset-filters'),
+                    onPressed: _resetFilters,
+                    child: const Text('Reset'),
+                  ),
+                ],
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(22, 6, 22, 2),
+            child: Text(
+              '${filteredTransactions.length} transaksi',
+              key: const ValueKey('transaction-result-count'),
+              style: TextStyle(
+                color: context.palette.secondaryText,
+                fontSize: 13,
+              ),
             ),
           ),
           Expanded(
@@ -265,7 +232,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                     onRefresh: widget.onRefresh,
                     child: ListView.separated(
                       physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.fromLTRB(22, 4, 22, 24),
+                      // Bottom space lets the last item scroll above the
+                      // add-transaction button.
+                      padding: const EdgeInsets.fromLTRB(22, 4, 22, 96),
                       itemCount: filteredTransactions.isEmpty
                           ? 1
                           : filteredTransactions.length,
@@ -298,6 +267,199 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         ],
       );
     },
+  );
+}
+
+class _FilterButton extends StatelessWidget {
+  const _FilterButton({required this.activeCount, required this.onPressed});
+
+  final int activeCount;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) => Badge(
+    isLabelVisible: activeCount > 0,
+    label: Text('$activeCount'),
+    backgroundColor: AppColors.primary,
+    child: SizedBox.square(
+      dimension: 52,
+      child: IconButton.filledTonal(
+        key: const ValueKey('transaction-filter-button'),
+        tooltip: 'Filter transaksi',
+        onPressed: onPressed,
+        style: IconButton.styleFrom(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+        icon: const Icon(Icons.tune_rounded),
+      ),
+    ),
+  );
+}
+
+class _ActiveFilterChip extends StatelessWidget {
+  const _ActiveFilterChip({required this.label, required this.onDeleted});
+
+  final String label;
+  final VoidCallback onDeleted;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(right: 8),
+    child: InputChip(
+      label: Text(label),
+      onDeleted: onDeleted,
+      deleteButtonTooltipMessage: 'Hapus filter $label',
+      visualDensity: VisualDensity.compact,
+    ),
+  );
+}
+
+/// Edits a copy of the filter and returns it on "Tampilkan"; dismissing the
+/// sheet keeps the current filter.
+class _FilterSheet extends StatefulWidget {
+  const _FilterSheet({
+    required this.initialFilter,
+    required this.categories,
+    required this.resultCount,
+  });
+
+  final TransactionFilter initialFilter;
+  final List<String> categories;
+  final int Function(TransactionFilter filter) resultCount;
+
+  @override
+  State<_FilterSheet> createState() => _FilterSheetState();
+}
+
+class _FilterSheetState extends State<_FilterSheet> {
+  late TransactionFilter _draft = widget.initialFilter;
+
+  @override
+  Widget build(BuildContext context) {
+    final count = widget.resultCount(_draft);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(22, 0, 22, 16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Filter transaksi',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: context.palette.text,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.only(top: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _section('Jenis', [
+                    for (final type in TransactionTypeFilter.values)
+                      _choice(
+                        key: 'filter-type-${type.name}',
+                        label: type.label,
+                        selected: _draft.type == type,
+                        onSelected: () => _draft = _draft.copyWith(type: type),
+                      ),
+                  ]),
+                  _section('Periode', [
+                    for (final date in TransactionDateFilter.values)
+                      _choice(
+                        key: 'filter-date-${date.name}',
+                        label: date.label,
+                        selected: _draft.date == date,
+                        onSelected: () => _draft = _draft.copyWith(date: date),
+                      ),
+                  ]),
+                  _section('Kategori', [
+                    _choice(
+                      key: 'filter-category-all',
+                      label: 'Semua',
+                      selected: _draft.category == null,
+                      onSelected: () =>
+                          _draft = _draft.copyWith(clearCategory: true),
+                    ),
+                    for (final category in widget.categories)
+                      _choice(
+                        key: 'filter-category-$category',
+                        label: category,
+                        selected: _draft.category == category,
+                        onSelected: () =>
+                            _draft = _draft.copyWith(category: category),
+                      ),
+                  ]),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  key: const ValueKey('filter-sheet-reset'),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(50),
+                  ),
+                  onPressed: () => setState(
+                    () => _draft = TransactionFilter(query: _draft.query),
+                  ),
+                  child: const Text('Reset'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 2,
+                child: FilledButton(
+                  key: const ValueKey('filter-sheet-apply'),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(50),
+                  ),
+                  onPressed: () => Navigator.pop(context, _draft),
+                  child: Text('Tampilkan $count transaksi'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _section(String title, List<Widget> choices) => Padding(
+    padding: const EdgeInsets.only(top: 16),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            color: context.palette.secondaryText,
+            fontWeight: FontWeight.w600,
+            fontSize: 13,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(spacing: 8, runSpacing: 8, children: choices),
+      ],
+    ),
+  );
+
+  Widget _choice({
+    required String key,
+    required String label,
+    required bool selected,
+    required VoidCallback onSelected,
+  }) => ChoiceChip(
+    key: ValueKey(key),
+    label: Text(label),
+    selected: selected,
+    onSelected: (_) => setState(onSelected),
   );
 }
 

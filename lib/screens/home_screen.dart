@@ -319,11 +319,9 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       TransactionsScreen(
         store: _transactionStore,
-        profile: _profile,
         isLoading: _isLoadingTransactions && !_hasLoadedTransactions,
         errorMessage: _transactionsError,
         onRefresh: _loadTransactions,
-        onProfileTap: _openProfile,
         onEditTransaction: _editTransaction,
         onDeleteTransaction: _deleteTransaction,
       ),
@@ -362,10 +360,12 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       floatingActionButton: _selectedIndex == 1
-          ? FloatingActionButton.extended(
+          // Icon-only so it does not cover the transaction amounts on phones;
+          // the tooltip keeps the label for long-press and screen readers.
+          ? FloatingActionButton(
               onPressed: _addTransaction,
-              icon: const Icon(Icons.add_rounded),
-              label: const Text('Tambah Transaksi'),
+              tooltip: 'Tambah Transaksi',
+              child: const Icon(Icons.add_rounded),
             )
           : null,
       bottomNavigationBar: NavigationBar(

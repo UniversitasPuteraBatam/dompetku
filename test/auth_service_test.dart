@@ -65,45 +65,42 @@ void main() {
       },
     );
 
-    test(
-      'updates only the name then refreshes the session',
-      () async {
-        final client = MockClient((request) async {
-          expect(request.method, 'PUT');
-          expect(request.url.path, '/api/profile');
-          expect(request.headers['content-type'], 'application/json');
-          expect(request.headers['authorization'], 'Bearer jwt-token');
-          expect(jsonDecode(request.body), {'name': 'Indra Baru'});
-          return http.Response(
-            jsonEncode({
-              'success': true,
-              'message': 'Profil berhasil diperbarui',
-              'data': {
-                'id': 1,
-                'name': 'Indra Baru',
-                'email': 'indra@gmail.com',
-                'profile_photo': 'https://example.com/profile.png',
-              },
-            }),
-            200,
-          );
-        });
-        final service = AuthService(
-          client: client,
-          baseUrl: 'http://localhost:3000',
+    test('updates only the name then refreshes the session', () async {
+      final client = MockClient((request) async {
+        expect(request.method, 'PUT');
+        expect(request.url.path, '/api/profile');
+        expect(request.headers['content-type'], 'application/json');
+        expect(request.headers['authorization'], 'Bearer jwt-token');
+        expect(jsonDecode(request.body), {'name': 'Indra Baru'});
+        return http.Response(
+          jsonEncode({
+            'success': true,
+            'message': 'Profil berhasil diperbarui',
+            'data': {
+              'id': 1,
+              'name': 'Indra Baru',
+              'email': 'indra@gmail.com',
+              'profile_photo': 'https://example.com/profile.png',
+            },
+          }),
+          200,
         );
+      });
+      final service = AuthService(
+        client: client,
+        baseUrl: 'http://localhost:3000',
+      );
 
-        final user = await service.updateProfile(name: 'Indra Baru');
+      final user = await service.updateProfile(name: 'Indra Baru');
 
-        expect(user.name, 'Indra Baru');
-        expect(user.email, 'indra@gmail.com');
-        expect(user.profilePhoto, 'https://example.com/profile.png');
-        final session = (await _savedSession())!;
-        expect(session['name'], 'Indra Baru');
-        expect(session.containsKey('password'), isFalse);
-        client.close();
-      },
-    );
+      expect(user.name, 'Indra Baru');
+      expect(user.email, 'indra@gmail.com');
+      expect(user.profilePhoto, 'https://example.com/profile.png');
+      final session = (await _savedSession())!;
+      expect(session['name'], 'Indra Baru');
+      expect(session.containsKey('password'), isFalse);
+      client.close();
+    });
 
     test(
       'clears the session when profile API responds with HTTP 401',
@@ -131,46 +128,57 @@ void main() {
       },
     );
 
-    test('uploads the photo as multipart and saves the returned path', () async {
-      final photoBytes = Uint8List.fromList([0x89, 0x50, 0x4e, 0x47]);
-      final client = MockClient((request) async {
-        expect(request.method, 'POST');
-        expect(request.url.path, '/api/profile/photo');
-        expect(request.headers['authorization'], 'Bearer jwt-token');
-        expect(request.headers['content-type'], startsWith('multipart/form-data'));
-        expect(utf8.decode(request.bodyBytes, allowMalformed: true),
-            contains('name="photo"'));
-        return http.Response(
-          jsonEncode({
-            'success': true,
-            'data': {
-              'id': 1,
-              'name': 'Indra',
-              'email': 'indra@gmail.com',
-              'profile_photo': '/uploads/profile/1-photo.png',
-            },
-          }),
-          200,
+    test(
+      'uploads the photo as multipart and saves the returned path',
+      () async {
+        final photoBytes = Uint8List.fromList([0x89, 0x50, 0x4e, 0x47]);
+        final client = MockClient((request) async {
+          expect(request.method, 'POST');
+          expect(request.url.path, '/api/profile/photo');
+          expect(request.headers['authorization'], 'Bearer jwt-token');
+          expect(
+            request.headers['content-type'],
+            startsWith('multipart/form-data'),
+          );
+          expect(
+            utf8.decode(request.bodyBytes, allowMalformed: true),
+            contains('name="photo"'),
+          );
+          return http.Response(
+            jsonEncode({
+              'success': true,
+              'data': {
+                'id': 1,
+                'name': 'Indra',
+                'email': 'indra@gmail.com',
+                'profile_photo': '/uploads/profile/1-photo.png',
+              },
+            }),
+            200,
+          );
+        });
+        final service = AuthService(
+          client: client,
+          baseUrl: 'http://localhost:3000',
         );
-      });
-      final service = AuthService(
-        client: client,
-        baseUrl: 'http://localhost:3000',
-      );
 
-      final user = await service.uploadProfilePhoto(photoBytes);
+        final user = await service.uploadProfilePhoto(photoBytes);
 
-      expect(user.profilePhoto, '/uploads/profile/1-photo.png');
-      expect(user.token, 'jwt-token');
-      final session = (await _savedSession())!;
-      expect(session['profile_photo'], '/uploads/profile/1-photo.png');
-      client.close();
-    });
+        expect(user.profilePhoto, '/uploads/profile/1-photo.png');
+        expect(user.token, 'jwt-token');
+        final session = (await _savedSession())!;
+        expect(session['profile_photo'], '/uploads/profile/1-photo.png');
+        client.close();
+      },
+    );
 
     test('returns the API message when the photo is rejected', () async {
       final client = MockClient(
         (_) async => http.Response(
-          jsonEncode({'success': false, 'message': 'Ukuran foto maksimal 2 MB'}),
+          jsonEncode({
+            'success': false,
+            'message': 'Ukuran foto maksimal 2 MB',
+          }),
           413,
         ),
       );
@@ -180,7 +188,11 @@ void main() {
         service.uploadProfilePhoto(Uint8List(4)),
         throwsA(
           isA<AuthApiException>()
-              .having((error) => error.message, 'message', 'Ukuran foto maksimal 2 MB')
+              .having(
+                (error) => error.message,
+                'message',
+                'Ukuran foto maksimal 2 MB',
+              )
               .having((error) => error.statusCode, 'statusCode', 413),
         ),
       );
@@ -986,24 +998,27 @@ void main() {
   });
 
   group('AuthService session storage', () {
-    test('moves a session saved by older versions into secure storage', () async {
-      SharedPreferences.setMockInitialValues({
-        'auth_session': jsonEncode({
-          'id': 1,
-          'name': 'Indra',
-          'email': 'indra@gmail.com',
-          'profile_photo': null,
-          'token': 'jwt-token',
-        }),
-      });
+    test(
+      'moves a session saved by older versions into secure storage',
+      () async {
+        SharedPreferences.setMockInitialValues({
+          'auth_session': jsonEncode({
+            'id': 1,
+            'name': 'Indra',
+            'email': 'indra@gmail.com',
+            'profile_photo': null,
+            'token': 'jwt-token',
+          }),
+        });
 
-      final user = await AuthService().getSavedUser();
+        final user = await AuthService().getSavedUser();
 
-      expect(user?.token, 'jwt-token');
-      expect((await _savedSession())?['token'], 'jwt-token');
-      final preferences = await SharedPreferences.getInstance();
-      expect(preferences.containsKey('auth_session'), isFalse);
-    });
+        expect(user?.token, 'jwt-token');
+        expect((await _savedSession())?['token'], 'jwt-token');
+        final preferences = await SharedPreferences.getInstance();
+        expect(preferences.containsKey('auth_session'), isFalse);
+      },
+    );
 
     test('treats an unreadable secure session as logged out', () async {
       SharedPreferences.setMockInitialValues({});

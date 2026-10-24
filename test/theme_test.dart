@@ -3,7 +3,6 @@ import 'package:dompetku/screens/financial_chart_screen.dart';
 import 'package:dompetku/screens/monthly_financial_report_screen.dart';
 import 'package:dompetku/screens/settings_screen.dart';
 import 'package:dompetku/screens/transactions_screen.dart';
-import 'package:dompetku/data/user_profile.dart';
 import 'package:dompetku/services/app_clock.dart';
 import 'package:dompetku/theme/app_theme.dart';
 import 'package:dompetku/theme/theme_controller.dart';
@@ -143,11 +142,9 @@ void main() {
           Scaffold(
             body: TransactionsScreen(
               store: store,
-              profile: const UserProfile(name: 'Rizky', email: 'r@e.com'),
               isLoading: false,
               errorMessage: null,
               onRefresh: () async {},
-              onProfileTap: () {},
               onEditTransaction: (_) {},
               onDeleteTransaction: (_) async {},
             ),

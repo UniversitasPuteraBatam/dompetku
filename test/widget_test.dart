@@ -22,6 +22,7 @@ import 'package:dompetku/screens/change_password_screen.dart';
 import 'package:dompetku/screens/home_screen.dart';
 import 'package:dompetku/screens/login_screen.dart';
 import 'package:dompetku/screens/settings_screen.dart';
+import 'package:dompetku/screens/transactions_screen.dart';
 import 'package:dompetku/widgets/profile_avatar.dart';
 
 void main() {
@@ -347,7 +348,7 @@ void main() {
 
     await tester.tap(find.text('Transaksi').last);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Tambah Transaksi'));
+    await tester.tap(find.byTooltip('Tambah Transaksi'));
     await tester.pumpAndSettle();
 
     final incomeType = find.descendant(
@@ -391,7 +392,7 @@ void main() {
 
     await tester.tap(find.text('Transaksi').last);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Tambah Transaksi'));
+    await tester.tap(find.byTooltip('Tambah Transaksi'));
     await tester.pumpAndSettle();
 
     final expenseType = find.descendant(
@@ -428,6 +429,49 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Rp 513.000'), findsOneWidget);
     expect(find.text('Rp 5.437.000'), findsOneWidget);
+  });
+
+  testWidgets('add button stays compact and never hides the last transaction', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(1080, 2220);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(MyApp(authService: _testAuthService()));
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).at(0), 'rizky@email.com');
+    await tester.enterText(find.byType(TextFormField).at(1), 'rahasia123');
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Login'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Transaksi').last);
+    await tester.pumpAndSettle();
+
+    final fab = find.byTooltip('Tambah Transaksi');
+    final fabRect = tester.getRect(fab);
+    expect(fabRect.width, lessThanOrEqualTo(56));
+
+    // Home keeps every tab in an IndexedStack, so look only inside this tab.
+    final screen = find.byType(TransactionsScreen);
+    final list = find.descendant(
+      of: screen,
+      matching: find.byWidgetPredicate(
+        (widget) =>
+            widget is ListView && widget.scrollDirection == Axis.vertical,
+      ),
+    );
+    // Scroll to the very end of the list, where the last transaction sits.
+    final position = tester
+        .state<ScrollableState>(
+          find.descendant(of: list, matching: find.byType(Scrollable)).first,
+        )
+        .position;
+    position.jumpTo(position.maxScrollExtent);
+    await tester.pumpAndSettle();
+    final lastTile = tester.getRect(
+      find.descendant(of: screen, matching: find.byType(TransactionTile)).last,
+    );
+    expect(lastTile.bottom, lessThanOrEqualTo(fabRect.top));
   });
 
   testWidgets('editing transaction saves the newly selected date via API', (
@@ -622,111 +666,117 @@ void main() {
     expect(find.text('Nadia Putri'), findsOneWidget);
   });
 
-  testWidgets('selected profile photo uploads and is restored from the server', (
-    WidgetTester tester,
-  ) async {
-    final photoBytes = Uint8List.fromList(_testPngBytes);
-    SharedPreferences.setMockInitialValues({
-      'auth_session': jsonEncode({
-        'id': 1,
-        'name': 'Rizky Pratama',
-        'email': 'rizky@email.com',
-        'profile_photo': null,
-        'token': 'test-jwt-token',
-      }),
-    });
-    final authService = _testAuthService();
-    await tester.pumpWidget(
-      MaterialApp(
-        home: HomeScreen(
-          user: const AuthUser(
-            id: 1,
-            name: 'Rizky Pratama',
-            email: 'rizky@email.com',
-            token: 'test-jwt-token',
+  testWidgets(
+    'selected profile photo uploads and is restored from the server',
+    (WidgetTester tester) async {
+      final photoBytes = Uint8List.fromList(_testPngBytes);
+      SharedPreferences.setMockInitialValues({
+        'auth_session': jsonEncode({
+          'id': 1,
+          'name': 'Rizky Pratama',
+          'email': 'rizky@email.com',
+          'profile_photo': null,
+          'token': 'test-jwt-token',
+        }),
+      });
+      final authService = _testAuthService();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: HomeScreen(
+            user: const AuthUser(
+              id: 1,
+              name: 'Rizky Pratama',
+              email: 'rizky@email.com',
+              token: 'test-jwt-token',
+            ),
+            authService: authService,
+            photoPicker: () async => photoBytes,
           ),
-          authService: authService,
-          photoPicker: () async => photoBytes,
+          routes: {
+            '/login': (context) => LoginScreen(authService: authService),
+            '/home': (context) => HomeScreen(authService: authService),
+          },
         ),
-        routes: {
-          '/login': (context) => LoginScreen(authService: authService),
-          '/home': (context) => HomeScreen(authService: authService),
-        },
-      ),
-    );
+      );
 
-    await tester.tap(find.text('Profil').last);
-    await tester.pumpAndSettle();
-    expect(
-      find.descendant(
-        of: find.byType(ProfileAvatar).first,
-        matching: find.byIcon(Icons.person_rounded),
-      ),
-      findsOneWidget,
-    );
-    await tester.tap(find.widgetWithText(ListTile, 'Edit Profile'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Pilih Foto'));
-    await tester.pumpAndSettle();
-
-    expect(
-      tester.widget<ProfileAvatar>(find.byType(ProfileAvatar).first).photoBytes,
-      same(photoBytes),
-    );
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Simpan'));
-    await tester.pumpAndSettle();
-
-    for (final tab in ['Home', 'Transaksi', 'Laporan', 'Profil']) {
-      await tester.tap(find.text(tab).last);
+      await tester.tap(find.text('Profil').last);
       await tester.pumpAndSettle();
-      if (tab == 'Profil') {
-        final avatar = tester.widget<ProfileAvatar>(
-          find.byType(ProfileAvatar).first,
-        );
-        expect(avatar.photoBytes, same(photoBytes));
+      expect(
+        find.descendant(
+          of: find.byType(ProfileAvatar).first,
+          matching: find.byIcon(Icons.person_rounded),
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(find.widgetWithText(ListTile, 'Edit Profile'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Pilih Foto'));
+      await tester.pumpAndSettle();
+
+      expect(
+        tester
+            .widget<ProfileAvatar>(find.byType(ProfileAvatar).first)
+            .photoBytes,
+        same(photoBytes),
+      );
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Simpan'));
+      await tester.pumpAndSettle();
+
+      for (final tab in ['Home', 'Transaksi', 'Laporan', 'Profil']) {
+        await tester.tap(find.text(tab).last);
+        await tester.pumpAndSettle();
+        if (tab == 'Profil') {
+          final avatar = tester.widget<ProfileAvatar>(
+            find.byType(ProfileAvatar).first,
+          );
+          expect(avatar.photoBytes, same(photoBytes));
+        }
       }
-    }
 
-    await tester.tap(find.text('Profil').last);
-    await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(ListTile, 'Logout'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Logout').last);
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextFormField).at(0), 'rizky@email.com');
-    await tester.enterText(find.byType(TextFormField).at(1), 'rahasia123');
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Login'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Profil').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(ListTile, 'Logout'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Logout').last);
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byType(TextFormField).at(0),
+        'rizky@email.com',
+      );
+      await tester.enterText(find.byType(TextFormField).at(1), 'rahasia123');
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Login'));
+      await tester.pumpAndSettle();
 
-    // After logging in again the photo comes from the server, not the device.
-    final restoredPhoto = tester.widget<ProfileAvatar>(
-      find.byType(ProfileAvatar).first,
-    );
-    expect(restoredPhoto.photoBytes, isNull);
-    expect(restoredPhoto.photoUrl, endsWith('/uploads/profile/1-photo.png'));
-    await tester.tap(find.text('Profil').last);
-    await tester.pumpAndSettle();
-    expect(find.text('Rizky Pratama'), findsOneWidget);
-    expect(
-      tester.widget<ProfileAvatar>(find.byType(ProfileAvatar).first).photoUrl,
-      endsWith('/uploads/profile/1-photo.png'),
-    );
+      // After logging in again the photo comes from the server, not the device.
+      final restoredPhoto = tester.widget<ProfileAvatar>(
+        find.byType(ProfileAvatar).first,
+      );
+      expect(restoredPhoto.photoBytes, isNull);
+      expect(restoredPhoto.photoUrl, endsWith('/uploads/profile/1-photo.png'));
+      await tester.tap(find.text('Profil').last);
+      await tester.pumpAndSettle();
+      expect(find.text('Rizky Pratama'), findsOneWidget);
+      expect(
+        tester.widget<ProfileAvatar>(find.byType(ProfileAvatar).first).photoUrl,
+        endsWith('/uploads/profile/1-photo.png'),
+      );
 
-    await tester.tap(find.widgetWithText(ListTile, 'Edit Profile'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Hapus Foto Profil'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Simpan'));
-    await tester.pumpAndSettle();
-    final removedPhoto = tester.widget<ProfileAvatar>(
-      find.byType(ProfileAvatar).first,
-    );
-    expect(removedPhoto.photoBytes, isNull);
-    expect(removedPhoto.photoUrl, isNull);
+      await tester.tap(find.widgetWithText(ListTile, 'Edit Profile'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Hapus Foto Profil'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Simpan'));
+      await tester.pumpAndSettle();
+      final removedPhoto = tester.widget<ProfileAvatar>(
+        find.byType(ProfileAvatar).first,
+      );
+      expect(removedPhoto.photoBytes, isNull);
+      expect(removedPhoto.photoUrl, isNull);
 
-    final preferences = await SharedPreferences.getInstance();
-    expect(preferences.containsKey('profile_photo_1'), isFalse);
-  });
+      final preferences = await SharedPreferences.getInstance();
+      expect(preferences.containsKey('profile_photo_1'), isFalse);
+    },
+  );
 
   testWidgets('change password screen validates and sends password update', (
     WidgetTester tester,

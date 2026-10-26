@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../data/user_profile.dart';
 import '../services/auth_service.dart';
+import '../theme/app_theme.dart';
 import '../widgets/field_label.dart';
 import '../widgets/profile_avatar.dart';
 
@@ -134,98 +135,213 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Edit Profile')),
-    body: SafeArea(
-      top: false,
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 460),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24, 16, 24, 28),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Center(
-                    child: Column(
-                      children: [
-                        ProfileAvatar(
-                          photoBytes: _photoBytes,
-                          photoUrl: _profilePhoto,
-                          radius: 52,
-                        ),
-                        const SizedBox(height: 12),
-                        OutlinedButton.icon(
-                          onPressed: _choosePhoto,
-                          icon: const Icon(Icons.photo_library_outlined),
-                          label: Text(
-                            _photoBytes == null ? 'Pilih Foto' : 'Ganti Foto',
+  Widget build(BuildContext context) {
+    final hasPhoto = _photoBytes != null || _profilePhoto != null;
+    return Scaffold(
+      appBar: AppBar(title: const Text('Edit Profile')),
+      body: SafeArea(
+        top: false,
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 460),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(22, 16, 22, 28),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+                      decoration: BoxDecoration(
+                        color: context.palette.surface,
+                        border: Border.all(color: context.palette.border),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        children: [
+                          GestureDetector(
+                            onTap: _isSaving ? null : _choosePhoto,
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                ProfileAvatar(
+                                  photoBytes: _photoBytes,
+                                  photoUrl: _profilePhoto,
+                                  radius: 48,
+                                ),
+                                Positioned(
+                                  right: -2,
+                                  bottom: -2,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(7),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: context.palette.surface,
+                                        width: 3,
+                                      ),
+                                    ),
+                                    child: const Icon(
+                                      Icons.photo_camera_rounded,
+                                      size: 16,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        if (_photoBytes != null || _profilePhoto != null) ...[
-                          const SizedBox(height: 8),
-                          TextButton.icon(
-                            onPressed: _isSaving ? null : _removePhoto,
-                            icon: const Icon(Icons.delete_outline_rounded),
-                            label: const Text('Hapus Foto Profil'),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Foto Profil',
+                            style: TextStyle(
+                              color: context.palette.text,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Format JPG atau PNG',
+                            style: TextStyle(
+                              color: context.palette.secondaryText,
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  style: _photoButtonStyle,
+                                  onPressed: _isSaving ? null : _choosePhoto,
+                                  icon: const Icon(
+                                    Icons.photo_library_outlined,
+                                    size: 18,
+                                  ),
+                                  label: Text(
+                                    hasPhoto ? 'Ganti Foto' : 'Pilih Foto',
+                                  ),
+                                ),
+                              ),
+                              if (hasPhoto) ...[
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    style: _photoButtonStyle.copyWith(
+                                      foregroundColor: WidgetStatePropertyAll(
+                                        context.palette.danger,
+                                      ),
+                                      side: WidgetStatePropertyAll(
+                                        BorderSide(
+                                          color: context.palette.danger
+                                              .withValues(alpha: 0.5),
+                                        ),
+                                      ),
+                                    ),
+                                    onPressed: _isSaving ? null : _removePhoto,
+                                    icon: const Icon(
+                                      Icons.delete_outline_rounded,
+                                      size: 18,
+                                    ),
+                                    label: const Text(
+                                      'Hapus Foto',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                         ],
-                      ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  const FieldLabel('Nama lengkap'),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    controller: _nameController,
-                    textCapitalization: TextCapitalization.words,
-                    textInputAction: TextInputAction.next,
-                    decoration: const InputDecoration(
-                      hintText: 'Nama lengkap',
-                      prefixIcon: Icon(Icons.person_outline_rounded),
+                    const SizedBox(height: 28),
+                    Text(
+                      'Informasi Akun',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: context.palette.text,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                    validator: (value) => value == null || value.trim().isEmpty
-                        ? 'Nama wajib diisi'
-                        : null,
-                  ),
-                  const SizedBox(height: 20),
-                  const FieldLabel('Email'),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    controller: _emailController,
-                    readOnly: true,
-                    keyboardType: TextInputType.emailAddress,
-                    textInputAction: TextInputAction.done,
-                    autofillHints: const [AutofillHints.email],
-                    onFieldSubmitted: (_) => _save(),
-                    decoration: const InputDecoration(
-                      hintText: 'nama@email.com',
-                      prefixIcon: Icon(Icons.mail_outline_rounded),
+                    const SizedBox(height: 16),
+                    const FieldLabel('Nama lengkap'),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _nameController,
+                      textCapitalization: TextCapitalization.words,
+                      textInputAction: TextInputAction.next,
+                      decoration: const InputDecoration(
+                        hintText: 'Nama lengkap',
+                        prefixIcon: Icon(Icons.person_outline_rounded),
+                      ),
+                      validator: (value) =>
+                          value == null || value.trim().isEmpty
+                          ? 'Nama wajib diisi'
+                          : null,
                     ),
-                    validator: (value) {
-                      final email = value?.trim() ?? '';
-                      if (email.isEmpty) return 'Email wajib diisi';
-                      if (!RegExp(
-                        r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-                      ).hasMatch(email)) {
-                        return 'Masukkan alamat email yang valid';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 28),
-                  ElevatedButton(
-                    onPressed: _isSaving ? null : _save,
-                    child: const Text('Simpan'),
-                  ),
-                ],
+                    const SizedBox(height: 20),
+                    const FieldLabel('Email'),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _emailController,
+                      readOnly: true,
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.done,
+                      autofillHints: const [AutofillHints.email],
+                      onFieldSubmitted: (_) => _save(),
+                      style: TextStyle(color: context.palette.secondaryText),
+                      decoration: InputDecoration(
+                        hintText: 'nama@email.com',
+                        prefixIcon: const Icon(Icons.mail_outline_rounded),
+                        suffixIcon: Icon(
+                          Icons.lock_outline_rounded,
+                          size: 18,
+                          color: context.palette.secondaryText,
+                        ),
+                        helperText:
+                            'Email digunakan untuk login dan tidak dapat diubah.',
+                      ),
+                      validator: (value) {
+                        final email = value?.trim() ?? '';
+                        if (email.isEmpty) return 'Email wajib diisi';
+                        if (!RegExp(
+                          r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                        ).hasMatch(email)) {
+                          return 'Masukkan alamat email yang valid';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 32),
+                    ElevatedButton(
+                      onPressed: _isSaving ? null : _save,
+                      child: _isSaving
+                          ? const SizedBox.square(
+                              dimension: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text('Simpan'),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
+
+final _photoButtonStyle = OutlinedButton.styleFrom(
+  minimumSize: const Size.fromHeight(42),
+  padding: const EdgeInsets.symmetric(horizontal: 10),
+  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+);

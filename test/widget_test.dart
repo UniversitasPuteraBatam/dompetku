@@ -630,11 +630,13 @@ void main() {
     );
 
     await tester.enterText(find.byType(TextFormField).first, '');
+    await tester.ensureVisible(find.widgetWithText(ElevatedButton, 'Simpan'));
     await tester.tap(find.widgetWithText(ElevatedButton, 'Simpan'));
     await tester.pumpAndSettle();
     expect(find.text('Nama wajib diisi'), findsOneWidget);
 
     await tester.enterText(find.byType(TextFormField).first, 'Nadia Putri');
+    await tester.ensureVisible(find.widgetWithText(ElevatedButton, 'Simpan'));
     await tester.tap(find.widgetWithText(ElevatedButton, 'Simpan'));
     await tester.pumpAndSettle();
 
@@ -719,6 +721,7 @@ void main() {
             .photoBytes,
         same(photoBytes),
       );
+      await tester.ensureVisible(find.widgetWithText(ElevatedButton, 'Simpan'));
       await tester.tap(find.widgetWithText(ElevatedButton, 'Simpan'));
       await tester.pumpAndSettle();
 
@@ -765,6 +768,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Hapus Foto Profil'));
       await tester.pumpAndSettle();
+      await tester.ensureVisible(find.widgetWithText(ElevatedButton, 'Simpan'));
       await tester.tap(find.widgetWithText(ElevatedButton, 'Simpan'));
       await tester.pumpAndSettle();
       final removedPhoto = tester.widget<ProfileAvatar>(

@@ -98,17 +98,17 @@ class _ThemeModePicker extends StatelessWidget {
               ButtonSegment(
                 value: ThemeMode.system,
                 icon: Icon(Icons.brightness_auto_outlined),
-                label: Text('Sistem'),
+                label: Text('Sistem', style: TextStyle(fontSize: 12)),
               ),
               ButtonSegment(
                 value: ThemeMode.light,
                 icon: Icon(Icons.light_mode_outlined),
-                label: Text('Terang'),
+                label: Text('Terang', style: TextStyle(fontSize: 12)),
               ),
               ButtonSegment(
                 value: ThemeMode.dark,
                 icon: Icon(Icons.dark_mode_outlined),
-                label: Text('Gelap'),
+                label: Text('Gelap', style: TextStyle(fontSize: 12)),
               ),
             ],
           ),

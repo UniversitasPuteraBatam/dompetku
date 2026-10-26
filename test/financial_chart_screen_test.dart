@@ -1,4 +1,5 @@
 import 'package:dompetku/data/dummy_transactions.dart';
+import 'package:dompetku/data/financial_chart_data.dart';
 import 'package:dompetku/screens/financial_chart_screen.dart';
 import 'package:dompetku/services/app_clock.dart';
 import 'package:flutter/material.dart';
@@ -24,13 +25,15 @@ void main() {
     expect(find.text('Belum ada transaksi pada periode ini'), findsOneWidget);
     expect(find.text('Rp 0'), findsNWidgets(3));
 
-    await tester.tap(find.widgetWithText(ChoiceChip, 'Tahun Ini'));
+    await tester.tap(find.text('Tahun Ini'));
     await tester.pumpAndSettle();
     expect(
       tester
-          .widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'Tahun Ini'))
+          .widget<SegmentedButton<FinancialChartPeriod>>(
+            find.byKey(const ValueKey('financial-chart-period')),
+          )
           .selected,
-      isTrue,
+      {FinancialChartPeriod.thisYear},
     );
     expect(find.text('Belum ada transaksi pada periode ini'), findsOneWidget);
 
@@ -105,7 +108,7 @@ void main() {
           ),
         ),
       );
-      await tester.tap(find.widgetWithText(ChoiceChip, period));
+      await tester.tap(find.text(period));
       await tester.pumpAndSettle();
 
       final frame = find.byKey(const ValueKey('financial-chart-frame'));
@@ -151,7 +154,7 @@ void main() {
           ),
         ),
       );
-      await tester.tap(find.widgetWithText(ChoiceChip, period));
+      await tester.tap(find.text(period));
       await tester.pumpAndSettle();
 
       final chartRect = tester.getRect(

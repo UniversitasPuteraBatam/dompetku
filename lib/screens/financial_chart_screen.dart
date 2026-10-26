@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
@@ -75,7 +77,7 @@ class _FinancialChartScreenState extends State<FinancialChartScreen> {
           onRefresh: _refresh,
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(22, 16, 22, 28),
+            padding: const EdgeInsets.fromLTRB(22, 20, 22, 28),
             children: [
               if (isLoading) ...[
                 const LinearProgressIndicator(),
@@ -88,17 +90,33 @@ class _FinancialChartScreenState extends State<FinancialChartScreen> {
                 ),
                 const SizedBox(height: 16),
               ],
-              Wrap(
-                spacing: 8,
-                children: FinancialChartPeriod.values
-                    .map(
-                      (period) => ChoiceChip(
-                        label: Text(period.label),
-                        selected: _period == period,
-                        onSelected: (_) => setState(() => _period = period),
+              SizedBox(
+                width: double.infinity,
+                child: SegmentedButton<FinancialChartPeriod>(
+                  key: const ValueKey('financial-chart-period'),
+                  showSelectedIcon: false,
+                  style: SegmentedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(42),
+                    textStyle: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  selected: {_period},
+                  onSelectionChanged: (selection) =>
+                      setState(() => _period = selection.first),
+                  segments: [
+                    for (final period in FinancialChartPeriod.values)
+                      ButtonSegment(
+                        value: period,
+                        label: Text(
+                          period.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    )
-                    .toList(),
+                  ],
+                ),
               ),
               const SizedBox(height: 20),
               CashFlowSummary(
@@ -144,10 +162,12 @@ class _FinancialBarChart extends StatelessWidget {
         bucket.expense,
       ].reduce((a, b) => a > b ? a : b),
     );
-    final interval = peak == 0 ? 0.25 : peak / 4;
-    // Leave room for the final interval label instead of placing it on the
-    // chart's clipped top edge.
-    final maxY = interval * 5.5;
+    // Round the axis to tidy steps (1, 2, 2.5, 5 × 10ⁿ) and keep ~10% headroom
+    // above the tallest bar so it never touches the top edge.
+    final interval = peak == 0 ? 1000.0 : _niceInterval(peak / 4);
+    final maxY = peak == 0
+        ? interval * 4
+        : (peak * 1.1 / interval).ceil() * interval;
     final labelStep = data.period == FinancialChartPeriod.thisMonth ? 5 : 1;
 
     return Column(
@@ -156,7 +176,9 @@ class _FinancialBarChart extends StatelessWidget {
         Container(
           key: const ValueKey('financial-chart-frame'),
           height: 270,
-          padding: const EdgeInsets.fromLTRB(4, 12, 12, 8),
+          // Extra top padding: the top axis label is centred on the top grid
+          // line, so half of it sits above the plot area.
+          padding: const EdgeInsets.fromLTRB(4, 28, 14, 8),
           decoration: BoxDecoration(
             color: context.palette.surface,
             border: Border.all(color: context.palette.border),
@@ -183,9 +205,35 @@ class _FinancialBarChart extends StatelessWidget {
                     show: true,
                     drawVerticalLine: false,
                     horizontalInterval: interval,
+                    getDrawingHorizontalLine: (_) => FlLine(
+                      color: context.palette.border,
+                      strokeWidth: 1,
+                      dashArray: const [4, 4],
+                    ),
                   ),
                   borderData: FlBorderData(show: false),
-                  barTouchData: BarTouchData(enabled: true),
+                  barTouchData: BarTouchData(
+                    enabled: true,
+                    touchTooltipData: BarTouchTooltipData(
+                      fitInsideHorizontally: true,
+                      fitInsideVertically: true,
+                      tooltipPadding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 6,
+                      ),
+                      getTooltipColor: (_) => context.palette.background,
+                      tooltipBorder: BorderSide(color: context.palette.border),
+                      getTooltipItem: (group, groupIndex, rod, rodIndex) =>
+                          BarTooltipItem(
+                            formatRupiah(rod.toY.round()),
+                            TextStyle(
+                              color: rod.color,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                    ),
+                  ),
                   titlesData: FlTitlesData(
                     topTitles: const AxisTitles(
                       sideTitles: SideTitles(showTitles: false),
@@ -198,7 +246,6 @@ class _FinancialBarChart extends StatelessWidget {
                         showTitles: true,
                         reservedSize: _leftAxisWidth,
                         interval: interval,
-                        maxIncluded: false,
                         getTitlesWidget: (value, meta) => SideTitleWidget(
                           meta: meta,
                           child: Text(
@@ -335,8 +382,27 @@ class _EmptyChart extends StatelessWidget {
   );
 }
 
+double _niceInterval(double raw) {
+  final magnitude = math
+      .pow(10, (math.log(raw) / math.ln10).floor())
+      .toDouble();
+  final normalized = raw / magnitude;
+  for (final step in const [1.0, 2.0, 2.5, 5.0]) {
+    if (normalized <= step) return step * magnitude;
+  }
+  return 10 * magnitude;
+}
+
 String _shortAmount(double value) {
-  if (value >= 1000000) return '${(value / 1000000).round()} jt';
-  if (value >= 1000) return '${(value / 1000).round()} rb';
+  if (value >= 1000000) return '${_trimDecimal(value / 1000000)} jt';
+  if (value >= 1000) return '${_trimDecimal(value / 1000)} rb';
   return value.round().toString();
+}
+
+// 2.5 -> "2,5", 3.0 -> "3".
+String _trimDecimal(double value) {
+  final rounded = (value * 10).round() / 10;
+  return rounded == rounded.roundToDouble()
+      ? rounded.round().toString()
+      : rounded.toString().replaceAll('.', ',');
 }

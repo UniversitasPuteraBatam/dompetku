@@ -138,12 +138,10 @@ class _MonthlyFinancialReportScreenState
                 ErrorNotice(message: errorMessage, onRetry: _refresh),
                 const SizedBox(height: 16),
               ],
-              Wrap(
-                spacing: 12,
-                runSpacing: 8,
+              Row(
                 children: [
-                  SizedBox(
-                    width: 220,
+                  Expanded(
+                    flex: 3,
                     child: DropdownButtonFormField<int>(
                       key: const ValueKey('report-month'),
                       initialValue: _selectedMonth,
@@ -163,8 +161,9 @@ class _MonthlyFinancialReportScreenState
                       },
                     ),
                   ),
-                  SizedBox(
-                    width: 140,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
                     child: DropdownButtonFormField<int>(
                       key: const ValueKey('report-year'),
                       initialValue: _selectedYear,
@@ -181,7 +180,7 @@ class _MonthlyFinancialReportScreenState
                   ),
                 ],
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 20),
               Text(
                 '${monthNames[_selectedMonth - 1]} $_selectedYear',
                 key: const ValueKey('report-period-title'),
@@ -190,47 +189,6 @@ class _MonthlyFinancialReportScreenState
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 10,
-                runSpacing: 8,
-                children: [
-                  OutlinedButton.icon(
-                    key: const ValueKey('export-report-pdf'),
-                    onPressed: _exportingFormat == null
-                        ? () => _export(report, asPdf: true)
-                        : null,
-                    icon: _exportingFormat == 'PDF'
-                        ? const SizedBox.square(
-                            dimension: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.picture_as_pdf_outlined),
-                    label: Text(
-                      _exportingFormat == 'PDF'
-                          ? 'Membuat PDF...'
-                          : 'Ekspor PDF',
-                    ),
-                  ),
-                  OutlinedButton.icon(
-                    key: const ValueKey('export-report-excel'),
-                    onPressed: _exportingFormat == null
-                        ? () => _export(report, asPdf: false)
-                        : null,
-                    icon: _exportingFormat == 'Excel'
-                        ? const SizedBox.square(
-                            dimension: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.table_view_outlined),
-                    label: Text(
-                      _exportingFormat == 'Excel'
-                          ? 'Membuat Excel...'
-                          : 'Ekspor Excel',
-                    ),
-                  ),
-                ],
-              ),
               const SizedBox(height: 12),
               CashFlowSummary(
                 income: report.income,
@@ -238,29 +196,59 @@ class _MonthlyFinancialReportScreenState
                 difference: report.difference,
               ),
               const SizedBox(height: 12),
-              _BalanceDisclosure(),
-              const SizedBox(height: 24),
               Row(
                 children: [
                   Expanded(
-                    child: Text(
-                      'Pengeluaran per Kategori',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: context.palette.text,
-                        fontWeight: FontWeight.w700,
+                    child: OutlinedButton.icon(
+                      key: const ValueKey('export-report-pdf'),
+                      style: _exportButtonStyle,
+                      onPressed: _exportingFormat == null
+                          ? () => _export(report, asPdf: true)
+                          : null,
+                      icon: _exportingFormat == 'PDF'
+                          ? const SizedBox.square(
+                              dimension: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.picture_as_pdf_outlined, size: 18),
+                      label: Text(
+                        _exportingFormat == 'PDF'
+                            ? 'Membuat PDF...'
+                            : 'Ekspor PDF',
                       ),
                     ),
                   ),
-                  Text(
-                    '${report.expensesByCategory.length} kategori',
-                    style: TextStyle(
-                      color: context.palette.secondaryText,
-                      fontSize: 12,
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      key: const ValueKey('export-report-excel'),
+                      style: _exportButtonStyle,
+                      onPressed: _exportingFormat == null
+                          ? () => _export(report, asPdf: false)
+                          : null,
+                      icon: _exportingFormat == 'Excel'
+                          ? const SizedBox.square(
+                              dimension: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.table_view_outlined, size: 18),
+                      label: Text(
+                        _exportingFormat == 'Excel'
+                            ? 'Membuat Excel...'
+                            : 'Ekspor Excel',
+                      ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
+              const _BalanceDisclosure(),
+              const SizedBox(height: 28),
+              _SectionHeader(
+                title: 'Pengeluaran per Kategori',
+                trailing: '${report.expensesByCategory.length} kategori',
+              ),
+              const SizedBox(height: 12),
               if (report.expensesByCategory.isEmpty)
                 const _InlineEmptyMessage('Belum ada pengeluaran bulan ini.')
               else
@@ -270,27 +258,11 @@ class _MonthlyFinancialReportScreenState
                     total: report.expense,
                     isLargest: item.category == report.largestExpenseCategory,
                   ),
-              const SizedBox(height: 22),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Transaksi Bulanan',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: context.palette.text,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    '${report.transactionCount} transaksi',
-                    key: const ValueKey('report-transaction-count'),
-                    style: TextStyle(
-                      color: context.palette.secondaryText,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
+              const SizedBox(height: 16),
+              _SectionHeader(
+                title: 'Transaksi Bulanan',
+                trailing: '${report.transactionCount} transaksi',
+                trailingKey: const ValueKey('report-transaction-count'),
               ),
               const SizedBox(height: 8),
               if (!report.hasTransactions)
@@ -306,15 +278,53 @@ class _MonthlyFinancialReportScreenState
   );
 }
 
+final _exportButtonStyle = OutlinedButton.styleFrom(
+  minimumSize: const Size.fromHeight(44),
+  padding: const EdgeInsets.symmetric(horizontal: 12),
+  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+);
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({
+    required this.title,
+    required this.trailing,
+    this.trailingKey,
+  });
+
+  final String title;
+  final String trailing;
+  final Key? trailingKey;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      Expanded(
+        child: Text(
+          title,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            color: context.palette.text,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+      Text(
+        trailing,
+        key: trailingKey,
+        style: TextStyle(color: context.palette.secondaryText, fontSize: 12),
+      ),
+    ],
+  );
+}
+
 class _BalanceDisclosure extends StatelessWidget {
   const _BalanceDisclosure();
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(14),
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
     decoration: BoxDecoration(
       color: context.palette.primarySoft,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(12),
       border: Border.all(color: context.palette.primarySoftBorder),
     ),
     child: Row(
@@ -323,16 +333,16 @@ class _BalanceDisclosure extends StatelessWidget {
         Icon(
           Icons.info_outline_rounded,
           color: context.palette.accent,
-          size: 20,
+          size: 18,
         ),
-        SizedBox(width: 10),
+        const SizedBox(width: 10),
         Expanded(
           child: Text(
-            'Saldo awal dan akhir rekening tidak tersedia. API hanya menyediakan transaksi, tanpa saldo pembukaan atau informasi kelengkapan riwayat. Selisih di atas adalah arus bersih transaksi bulan ini, bukan saldo rekening.',
+            'Saldo awal dan akhir rekening tidak tersedia. Selisih adalah arus bersih transaksi bulan ini, bukan saldo rekening.',
             style: TextStyle(
-              color: context.palette.text,
+              color: context.palette.secondaryText,
               fontSize: 12,
-              height: 1.4,
+              height: 1.45,
             ),
           ),
         ),
@@ -354,32 +364,49 @@ class _ExpenseCategoryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 12),
+    padding: const EdgeInsets.only(bottom: 14),
     child: Column(
       children: [
         Row(
           children: [
             Expanded(
-              child: Text(
-                item.category,
-                style: TextStyle(
-                  color: context.palette.text,
-                  fontWeight: FontWeight.w600,
-                ),
+              child: Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      item.category,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: context.palette.text,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  if (isLargest)
+                    Container(
+                      margin: const EdgeInsets.only(left: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: context.palette.dangerSoft,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        'Terbesar',
+                        style: TextStyle(
+                          color: context.palette.danger,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
-            if (isLargest)
-              Padding(
-                padding: EdgeInsets.only(right: 8),
-                child: Text(
-                  'Terbesar',
-                  style: TextStyle(
-                    color: context.palette.danger,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
+            const SizedBox(width: 8),
             Text(
               formatRupiah(item.amount),
               style: TextStyle(

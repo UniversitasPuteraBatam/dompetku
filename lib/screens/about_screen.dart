@@ -108,18 +108,18 @@ class AboutScreen extends StatelessWidget {
                 children: [
                   _InfoRow(
                     icon: Icons.person_outline_rounded,
-                    label: 'Nama',
-                    value: Text('Indra Lasmana Putra'),
+                    label: 'Anggota 1',
+                    value: Text('Indra Lasmana Putra\n241510014'),
                   ),
                   _InfoRow(
-                    icon: Icons.badge_outlined,
-                    label: 'NPM',
-                    value: Text('241510014'),
+                    icon: Icons.person_outline_rounded,
+                    label: 'Anggota 2',
+                    value: Text('M. Risky Alfianda\n241510048'),
                   ),
                   _InfoRow(
                     icon: Icons.menu_book_outlined,
                     label: 'Mata Kuliah',
-                    value: Text('Mobile Aplikasi'),
+                    value: Text('Pemrograman Mobile'),
                   ),
                   _InfoRow(
                     icon: Icons.school_outlined,
@@ -145,7 +145,7 @@ class AboutScreen extends StatelessWidget {
               ),
               const SizedBox(height: 28),
               Text(
-                '© 2026 Indra Lasmana Putra',
+                '© 2026 DompetKu. All rights reserved.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: context.palette.secondaryText,
